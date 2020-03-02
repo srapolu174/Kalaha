@@ -24,7 +24,7 @@ public class AIClient implements Runnable
     private Socket socket;
     private boolean running;
     private boolean connected;
-    	
+    
     /**
      * Creates a new client.
      */
@@ -211,19 +211,147 @@ public class AIClient implements Runnable
      * @return Move to make (1-6)
      */
     public int getMove(GameState currentBoard)
-    {
-        int myMove = getRandom();
-        return myMove;
+    {   
+        int MOVE = AB(currentBoard, true, player, 1, -789, 789); // Aiming for "GRADE C", having conditions: MinMax with DFS and alpha-beta pruning stopping at pre - defined depth level (>4). 
+         return MOVE;
+    }
+   
+    public int AB(GameState currentBoard, boolean maxPlayer, int player, int depth, int A, int B) {
+        // A -> Alpha (highest value found for maxPlayer)
+        // B -> Beta (lowest value found for minPlayer)
+        int val = 0;    
+        int MOVE = 0;
+        Integer eval;          
+        
+        if (depth == 7 || currentBoard.gameEnded()) // if it reached an end, evaluating the score.
+        {
+            
+            if (player == 1) // for maxPlayer
+            {
+             return (currentBoard.getScore(1) - currentBoard.getScore(2));
+            }
+            
+            else  //for minPlayer
+            {
+             return (currentBoard.getScore(2) - currentBoard.getScore(1));   
+            }
+//            if(player == 1)
+//            {   
+//                return( currentBoard.getScore(Conv(maxPlayer)) - currentBoard.getScore(Conv(!maxPlayer)+1) );
+//            }
+//            
+//            else
+//            {
+//                return( currentBoard.getScore(Conv(!maxPlayer) + 1) - currentBoard.getScore(Conv(maxPlayer)) );
+//            }
+        }
+
+        if (maxPlayer) // for MaxPlayer
+        { 
+            eval = -789; //giving it an infinite value
+            for (int i = 1; i < 7; i++) { // checking all possible moves from the current state
+                if (currentBoard.moveIsPossible(i)) { //to check if its a legal move
+                           
+                    GameState newState = currentBoard.clone(); // cloning the GameState everytime 
+                    newState.makeMove(i); // making moves on the new cloned GameState
+                               
+                    if(newState.getNextPlayer() == player) // to check if its a free turn
+                    {
+                        maxPlayer = true;
+                    }
+                    else
+                    {
+                        maxPlayer = false; 
+                    }
+                   
+                    val = AB(newState, maxPlayer, player, depth + 1, A, B); // recursive calling for extra turn; if not, continuing the gameplay
+                    if (val > eval) {    
+                        eval = val;
+                        MOVE = i; //setting highest value to eval and returning the respective move to make.
+                    }
+                    
+                        A = MAX(A, eval); //updating alpha value
+                    
+
+                    if (B <= A) // comparing alpha and beta values
+                    { 
+                        break;
+                    }
+                }
+               
+            }
+        } else { // for MinPlayer
+            eval = 789; //giving it an infinite value
+            int j;
+            for ( j = 1; j < 7; j++) { // checking all possible moves from the current state
+                if (currentBoard.moveIsPossible(j)) { //to check if its a legal move
+               
+                    
+                    GameState newBoard = currentBoard.clone(); // cloning the GameState everytime 
+                    newBoard.makeMove(j); // making moves on the new cloned GameState
+                                                           
+                    if(newBoard.getNextPlayer() == player) // to check if its a free turn
+                    { 
+                       maxPlayer = true;
+                    }
+                    else
+                    { 
+                       maxPlayer = false;                     
+                    } 
+                   
+                    val = AB(newBoard, maxPlayer, player, depth + 1, A, B); // recursive calling for extra turn; if not, continuing the gameplay
+                    if (val < eval) {  
+                        eval = val;
+                        MOVE = j; //setting highest value to eval and returning the respective move to make.
+                    }
+                   
+                        B = MIN(B, eval); //updating beta value
+                    
+
+                    if (B <= A) { // comparing alpha and beta values
+                        break;
+                    }
+                }
+            }
+          
+        }
+       
+        if (depth != 1) { // returning MOVE instead of eval when depth is 1,else compute eval and return it 
+            MOVE = eval;
+        }
+       
+        return MOVE;
+    }
+    private int MAX(int X, int Y){ // to calculate maximum of two values
+        if(X > Y)
+        {  
+            return(X);
+        }
+        else
+        {
+            return(Y);
+        }
     }
     
-    /**
-     * Returns a random ambo number (1-6) used when making
-     * a random move.
-     * 
-     * @return Random ambo number
-     */
-    public int getRandom()
-    {
-        return 1 + (int)(Math.random() * 6);
+    private int MIN(int X, int Y){ // to calculate minimum of two values
+        if(X < Y)
+        {  
+            return(Y);
+        }
+        else
+        {
+            return(X);
+        }
     }
-}
+//    private int Conv(boolean bool) { // to convert boolean to int
+//         if(bool)
+//         {
+//             return(1);
+//         }
+//         else
+//         {
+//             return(0);
+//         }
+    
+    }
+   
